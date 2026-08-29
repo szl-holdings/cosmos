@@ -65,6 +65,24 @@ class HardenedHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urllib.parse.urlsplit(self.path)
+        if parsed.path in ("/health", "/healthz"):
+            body = json.dumps(
+                {
+                    "ok": True,
+                    "service": "cosmos",
+                    "lambda_status": "Conjecture 1",
+                    "energy": None,
+                    "signer": "UNSIGNED-honest",
+                },
+                separators=(",", ":"),
+            ).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(body)
+            return
         if parsed.path == "/.well-known/szl-source.json":
             force = urllib.parse.parse_qs(parsed.query).get("refresh") == ["1"]
             self._send_json(
